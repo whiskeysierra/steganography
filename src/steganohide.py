@@ -35,13 +35,10 @@ def main():
                 # index in the current byte (0-7)
                 bit_index = 0
                 
-                index = 0
-                
                 def read_byte(self):
                     read = binary.read(1)
                     print "Read %s" % read
-                    if read is "":
-                        print "End of file"
+                    if read == "":
                         return ""
                     else:
                         return int(ord(read))
@@ -49,6 +46,11 @@ def main():
                 def next_bit(self):
                     if self.current_byte is None:
                         self.current_byte = self.read_byte()
+                        
+                    if self.current_byte == "":
+                        # last byte
+                        return 
+                    
                     try:
                         bit = (self.current_byte & (1 << self.bit_index)) >> self.bit_index
                         self.bit_index = self.bit_index + 1
@@ -59,32 +61,35 @@ def main():
                             self.current_byte = self.read_byte()
                 
                 def encode(self, pixel):
-                    if self.current_byte is "":
+                    if self.current_byte == "":
                         # last byte
-                        print "End of content"
                         return pixel
                     
-                    print "Pixel #%s" % self.index
-                    self.index = self.index + 1
-
                     #print "Input byte: %d" % pixel
                     for n in xrange(bits):
                         # set n-th bit to 0
                         pixel &= ~(1 << n)
+                        bit = self.next_bit()
+                        if bit is None:
+                            return pixel
                         # set n-th bit to 1 if needed
-                        pixel |= self.next_bit() << n
+                        pixel |= bit << n
                     
                     #print "Output byte: %d" % pixel
                     return pixel
-            
+
             encoder = Encoder()
-            pix = bitmap.load()
-            for x in xrange(bitmap.size[0]):
-                for y in xrange(bitmap.size[1]):
-                    pix[x][y] = encoder.encode(pix[x][y])
-            
-            #bitmap.point(encoder.encode).save("target.bmp", "BMP")
-            #bitmap.point(encoder.encode).save(target, "BMP")
+            out = Image.new(bitmap.mode, bitmap.size, None)
+            width, height = bitmap.size
+            for x in xrange(width):
+                for y in xrange(height):
+                    r, g, b = bitmap.getpixel((x, y))
+                    r = encoder.encode(r)
+                    g = encoder.encode(g)
+                    b = encoder.encode(b)
+                    out.putpixel((x, y), (r, g, b))
+                    
+            out.save(target, "BMP")            
         finally:
             binary.close()
             image.close()
