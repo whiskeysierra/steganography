@@ -37,7 +37,6 @@ def main():
                 
                 def read_byte(self):
                     read = binary.read(1)
-                    print "Read %s" % read
                     if read == "":
                         return ""
                     else:

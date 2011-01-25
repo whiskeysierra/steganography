@@ -1,10 +1,39 @@
 #!/usr/bin/env python
 
-import argparse
 import Image
+import argparse
+import hashlib
 import os
 import sys
-import hashlib
+import xtea
+
+def crypt(key, data, iv = '\00\00\00\00\00\00\00\00'):
+    encrypted = []
+    
+    def encrypt_block(vector, block):
+        vector = [ ord(v) for v in vector ]
+        block = map(ord, block)
+        xor = "".join([ chr(v ^ x) for v, x in zip(vector, block) ])
+        encrypted = xtea.xtea_encrypt(key, xor)
+        return encrypted
+
+    vector = iv
+    begin = 0
+    size = 8
+    
+    left = len(data) % size
+    if left is not 0:
+        # pad with zeros
+        data = data + chr(0) * left 
+    
+    max = len(data) + 1
+    for end in xrange(size, max, size):
+        block = data[begin:end]
+        begin = end
+        vector = encrypt_block(vector, block);
+        encrypted.append(vector)
+    
+    return "".join(encrypted)
 
 def main():
     parser = argparse.ArgumentParser(description="Hides a binary file in a bitmap.")
@@ -20,9 +49,8 @@ def main():
     
     sha256 = hashlib.new("sha256");
     sha256.update(args.password)
-    password = int(sha256.hexdigest(), 16) >> 128
-    print password
-    sys.exit(1)
+    password = sha256.hexdigest()
+    password = password[0:16]
     
     binary_size = os.path.getsize(binary.name);
     image_size = os.path.getsize(image.name);
@@ -45,7 +73,6 @@ def main():
                 
                 def read_byte(self):
                     read = binary.read(1)
-                    print "Read %s" % read
                     if read == "":
                         return ""
                     else:
