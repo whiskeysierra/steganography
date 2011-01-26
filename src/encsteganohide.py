@@ -44,20 +44,27 @@ def main():
     args = parser.parse_args()
     
     bits = args.bits;
-    binary = args.binary;
     image = args.image;
     
     sha256 = hashlib.new("sha256");
     sha256.update(args.password)
     password = sha256.hexdigest()
     password = password[0:16]
-    
-    binary_size = os.path.getsize(binary.name);
-    image_size = os.path.getsize(image.name);
-    
-    if (binary_size * 8) / bits > image_size:
-        print "%s does not fit into %s" % (binary.name, image.name)
-        sys.exit(1)
+
+    class Binary:
+        content = crypt(password, args.binary.read())
+        size = len(content)
+        index = 0
+        
+        def read(self, n):
+            read = self.content[self.index:self.index + n]
+            self.index = self.index + n
+            return read
+        
+        def close(self):
+            args.binary.close()
+        
+    binary = Binary()
     
     with open(image.name + ".b%02d" % bits, "wb") as target:
         try:
