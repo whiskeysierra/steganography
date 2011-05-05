@@ -3,8 +3,6 @@
 import Image
 import argparse
 import hashlib
-import os
-import sys
 import xtea
 
 def crypt(key, data, iv = '\00\00\00\00\00\00\00\00'):
