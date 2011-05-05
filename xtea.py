@@ -20,9 +20,12 @@ def encrypt(key, block, n=32):
     sum = 0
     
     for round in range(n):
-        v0 = (v0 + (((v1 << 4 ^ v1 >> 5) + v1) ^ (sum + k[sum & 3]))) & mask
-        sum = (sum + delta) & mask
-        v1 = (v1 + (((v0 << 4 ^ v0 >> 5) + v0) ^ (sum + k[sum >> 11 & 3]))) & mask
+        v0 += ((v1 << 4 ^ v1 >> 5) + v1) ^ (sum + k[sum & 3])
+        v0 &= mask
+        sum += delta
+        sum &= mask
+        v1 = ((v0 << 4 ^ v0 >> 5) + v0) ^ (sum + k[sum >> 11 & 3])
+        v1 &= mask
 
     return v0 << 32 | v1
     
@@ -43,8 +46,11 @@ def decrypt(key, block, n=32):
     sum = (delta * n) & mask
     
     for round in range(n):
-        v1 = (v1 - (((v0 << 4 ^ v0 >> 5) + v0) ^ (sum + k[sum >> 11 & 3]))) & mask
-        sum = (sum - delta) & mask
-        v0 = (v0 - (((v1 << 4 ^ v1 >> 5) + v1) ^ (sum + k[sum & 3]))) & mask
+        v1 -= ((v0 << 4 ^ v0 >> 5) + v0) ^ (sum + k[sum >> 11 & 3])
+        v1 &= mask
+        sum -= delta
+        sum &= mask
+        v0 -= ((v1 << 4 ^ v1 >> 5) + v1) ^ (sum + k[sum & 3])
+        v0 &= mask
     
     return v0 << 32 | v1
