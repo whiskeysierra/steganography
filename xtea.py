@@ -5,7 +5,7 @@ def __key_blocks(key):
 
 def encrypt(key, block, n=32):
     """
-        Encrypt 64 bit block using the XTEA block cipher
+        Encrypts a 64 bit block using the XTEA block cipher
         * key = 128 bit
         * block = 64 bit
         * n = rounds (default 32)
@@ -31,7 +31,7 @@ def encrypt(key, block, n=32):
     
 def decrypt(key, block, n=32):
     """
-        Decrypt 64 bit block using the XTEA block cipher
+        Decrypts a 64 bit block using the XTEA block cipher
         * key = 128 bit 
         * block = 64 bit
         * n = rounds (default 32)
