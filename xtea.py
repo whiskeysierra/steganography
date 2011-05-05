@@ -24,7 +24,7 @@ def encrypt(key, block, n=32):
         v0 &= mask
         sum += delta
         sum &= mask
-        v1 = ((v0 << 4 ^ v0 >> 5) + v0) ^ (sum + k[sum >> 11 & 3])
+        v1 += ((v0 << 4 ^ v0 >> 5) + v0) ^ (sum + k[sum >> 11 & 3])
         v1 &= mask
 
     return v0 << 32 | v1
