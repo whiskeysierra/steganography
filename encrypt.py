@@ -1,60 +1,52 @@
 #!/usr/bin/env python
 
 import argparse
+import binary
 import cfb
 import hashlib
+import image
+import os
 import random
 import struct
 import sys
 import xtea
-import os
-
-def random_iv():
-    return random.randint(0, 2 ** 64)
-
-def byte_str(byte):
-    return bin(byte)[2:].rjust(8, "0")
+import itertools
 
 def main():
     parser = argparse.ArgumentParser(description="Encrypts and hides binary content in the lowest bits of a bitmap")
-    parser.add_argument('-p', '--passphrase', type=str, metavar='<passphrase>', help='The passphrase used for decryption')
-    parser.add_argument('-k', '--key', type=str, metavar='<key>', help='The key used for authenticity and integrity')
-    parser.add_argument("binary", type=file, metavar='<binary>', help="The binary file to hide")
+    parser.add_argument('-k', '--password', type=str, required=True, metavar='<password>', help='The password used for encryption')
+    parser.add_argument('-m', '--macpassword', type=str, required=True, metavar='<macpassword>', help='The password used for authenticity and integrity')
+    parser.add_argument("content", type=file, metavar='<content>', help="The binary file to hide")
     parser.add_argument('bitmap', type=file, metavar='<bitmap>', help='The bitmap file to hide the binary file in')
     args = parser.parse_args()
         
-    passphrase = args.passphrase
-    key = args.key
-    binary = args.binary
+    password = args.password
+    macpassword = args.macpassword
+    content = args.content
     bitmap = args.bitmap
     
-    xtea_key = int(hashlib.sha256(passphrase).hexdigest(), 16) >> 128
-    size = os.path.getsize(binary.name) * 8;
-    iv = random_iv()
+    binary_size = os.path.getsize(content.name)
+    bitmap_size = os.path.getsize(bitmap.name)
     
-    plaintext = bytearray(binary.read())
+    if binary_size * 8 > bitmap_size:
+        raise Exception("%s is too big to be hidden in %s" % (content.name, bitmap.name))
     
-    print "Passphrase: %s" % passphrase
-    print "Key: %s" % key
-    print "Initial vector: %d" % iv
-    print "Content consists of %d bits" % size 
-    print "XTEA block size is 64 bits"
-    print "Last Block is of size %d bit(s)" % (size % 64)
-
-    print "XTEA key is %d" % xtea_key
-    block = random.randint(0, 2 ** 64)
-    print "Block is: %d" % block
+    key = int(hashlib.sha256(password).hexdigest(), 16) >> 128
+    size = os.path.getsize(content.name) * 8;
+    iv = random.randint(0, 0xffffffffffffffff)
     
-    encrypted = xtea.encrypt(xtea_key, block)
-    print "Encrypted block is: %d" % encrypted
+    # TODO stream like encryption
+    plaintext = bytearray(content.read())
     
-    decrypted = xtea.decrypt(xtea_key, encrypted)
-    print "Decrypted block is: %d" % decrypted
+    encrypted = cfb.encrypt(xtea.encrypt, key, iv, plaintext)
     
-    print
-    print "Match?"
-    print block == decrypted
+    all = itertools.chain(
+        binary.unpack(iv, 8),
+        binary.unpack(binary_size, 2),
+        encrypted
+    )
     
+    image.hide(all, bitmap)
     
 if __name__ == "__main__":
     main()
