@@ -4,13 +4,14 @@ import argparse
 import binary
 import cfb
 import hashlib
+import hmac
 import image
+import itertools
 import os
 import random
 import struct
 import sys
 import xtea
-import itertools
 
 def main():
     parser = argparse.ArgumentParser(description="Encrypts and hides binary content in the lowest bits of a bitmap")
@@ -36,12 +37,16 @@ def main():
     iv = random.randint(0, 0xffffffffffffffff)
     
     # TODO stream like encryption
-    plaintext = bytearray(content.read())
+    p = content.read()
+    plaintext = bytearray(p)
     
     encrypted = cfb.encrypt(xtea.encrypt, key, iv, plaintext)
+   
+    mac = int(hmac.new(macpassword, p, hashlib.sha256).hexdigest(), 16)
     
     all = itertools.chain(
         binary.unpack(iv, 8),
+        binary.unpack(mac, 32),
         binary.unpack(binary_size, 2),
         encrypted
     )

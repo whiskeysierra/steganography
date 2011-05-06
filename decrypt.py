@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+from itertools import islice as slice
 import argparse
 import binary
 import cfb
 import hashlib
+import hmac
 import image
-from itertools import islice as slice
 import sys
 import xtea
 
@@ -25,13 +26,19 @@ def main():
     ciphertext = image.show(bitmap)
     
     iv = binary.pack(slice(ciphertext, 8))
+    mac = binary.pack(slice(ciphertext, 32))
     binary_size = binary.pack(slice(ciphertext, 2))
     encrypted = slice(ciphertext, binary_size)
 
-    decrypted = cfb.decrypt(xtea.encrypt, key, iv, encrypted)
+    decrypted = bytearray(cfb.decrypt(xtea.encrypt, key, iv, encrypted))
+    
+    check = int(hmac.new(macpassword, str(decrypted), hashlib.sha256).hexdigest(), 16)
 
-    for d in decrypted:
-        sys.stdout.write(chr(d))
+    if mac == check:
+        for d in decrypted:
+            sys.stdout.write(chr(d))
+    else:
+        raise Exception('Data has been altered')
     
 if __name__ == '__main__':
     main()
