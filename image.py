@@ -21,7 +21,7 @@ def move(i, finished=False):
             return None, True
     
 
-def hide(bytes, bitmap, ext='ste'):
+def hide(bytes, bitmap, ext='sae'):
     """
         Hides the given bytes in the supplied bitmap.
         * bytes variable length byte sequence
@@ -51,7 +51,6 @@ def hide(bytes, bitmap, ext='ste'):
         out.putpixel((x, y), (r, g, b))
         
     name = bitmap.name + '.' + ext
-    name = "image.enc.bmp"
     with open(name, "wb") as target:
         out.save(target, "BMP")
 

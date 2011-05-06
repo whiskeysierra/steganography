@@ -38,7 +38,6 @@ pom.xml.releaseBackup
 
 /target
 
-target.bmp
-image.enc.bmp
+image.bmp.sae
 *.bmp.b*
 *.pyc
