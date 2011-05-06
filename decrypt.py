@@ -26,11 +26,11 @@ def main():
     ciphertext = image.show(bitmap)
     
     iv = binary.pack(slice(ciphertext, 8))
-    mac = binary.pack(slice(ciphertext, 32))
     binary_size = binary.pack(slice(ciphertext, 2))
     encrypted = slice(ciphertext, binary_size)
-
+    
     decrypted = bytearray(cfb.decrypt(xtea.encrypt, key, iv, encrypted))
+    mac, decrypted = binary.pack(decrypted[:32]), decrypted[32:]
     
     check = int(hmac.new(macpassword, str(decrypted), hashlib.sha256).hexdigest(), 16)
 

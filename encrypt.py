@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
+from itertools import chain
 import argparse
 import binary
 import cfb
 import hashlib
 import hmac
 import image
-import itertools
 import os
 import random
 import xtea
@@ -34,18 +34,15 @@ def main():
     size = os.path.getsize(content.name) * 8;
     iv = random.randint(0, 0xffffffffffffffff)
     
-    # TODO stream like encryption
     p = content.read()
     plaintext = bytearray(p)
     
-    encrypted = cfb.encrypt(xtea.encrypt, key, iv, plaintext)
-   
     mac = int(hmac.new(macpassword, p, hashlib.sha256).hexdigest(), 16)
+    encrypted = cfb.encrypt(xtea.encrypt, key, iv, chain(binary.unpack(mac, 32), plaintext))
     
-    all = itertools.chain(
+    all = chain(
         binary.unpack(iv, 8),
-        binary.unpack(mac, 32),
-        binary.unpack(binary_size, 2),
+        binary.unpack(binary_size + 32, 2),
         encrypted
     )
     
