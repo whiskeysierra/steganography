@@ -1,4 +1,3 @@
-import struct
 
 def key_blocks(key):
     return [ (key >> (32 * i)) & 0xffffffff for i in range(3, -1, -1) ]

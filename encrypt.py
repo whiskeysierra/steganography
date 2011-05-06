@@ -9,8 +9,6 @@ import image
 import itertools
 import os
 import random
-import struct
-import sys
 import xtea
 
 def main():
